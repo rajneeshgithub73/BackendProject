@@ -1,3 +1,3 @@
 #Backend project
 
-A backend prject for my resume.
+A backend project for my resume.
