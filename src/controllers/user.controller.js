@@ -1,8 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
-import { ApiResponse } from "../utils/ApiResponse.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { User } from "../models/user.model.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     //extract the user credentials from the request body
@@ -16,11 +16,11 @@ const registerUser = asyncHandler(async (req, res) => {
     //return response
 
     const { fullname, email, username, password } = req.body
-    console.log("email: ", email);
+    console.log("request body:", req.body);
 
-    // if(fullname === "") {
-    //     throw new ApiError(400, "fullname is required")
-    // }
+    if(fullname === "") {
+        throw new ApiError(400, "fullname is required")
+    }
 
     if (
         [fullname, email, username, password].some((field) => field?.trim() === "")
@@ -28,22 +28,33 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "all fields are required")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 
     if(existedUser) throw new ApiError(409, "user already exists")
 
+    console.log("files: ", req.files)
+
     console.log(req.files?.avatar[0]?.path);
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
 
+    console.log(req.files?.coverImage[0]?.path);
+
     const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    if(!avatarLocalPath) throw new ApiError(400, "Avatar file is required");
+    if(!avatarLocalPath){
+        throw new ApiError(400, "Avatar file is required");
+    }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    console.log("avatar: ", avatar);
+
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    console.log("coverImage: ", coverImage);
 
     if(!avatar){
         throw new ApiError(400, "Avatar file is required")
@@ -51,7 +62,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const user = await User.create({
         fullname,
-        avatar: avatar.url,
+        avatar: avatar?.url || "",
         coverImage: coverImage?.url || "",
         email,
         password,
@@ -69,7 +80,11 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(200, createdUser, "user created successfully!")
     )
-    
+
+    // return res.status(200).json({
+    //     message: "ok"
+    // })
+
 })
 
 export { registerUser, }

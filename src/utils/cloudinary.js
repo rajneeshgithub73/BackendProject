@@ -1,30 +1,28 @@
-import {v2 as cloudinary} from 'cloudinary';
-import fs from 'fs';
+import {v2 as cloudinary} from "cloudinary"
+import fs from "fs"
 
 cloudinary.config({ 
   cloud_name: process.env.COUDINARY_CLOUD_NAME, 
-  api_key: process.env.COUDINARY_API_KEY, 
-  api_secret: process.env.COUDINARY_API_SECRET 
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) {
-            return null;
+            return null
         }
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
         })
-        console.log("File is uploaded successfully", response.url);
+        // console.log("File is uploaded successfully", response.url);
+        fs.unlinkSync(localFilePath)
         return response;
     } catch (error) {
         fs.unlinkSync(localFilePath)
+        // console.log("cloudinary cath error: ", error);
         return null;
     }
 }
 
 export { uploadOnCloudinary }
-
-// cloudinary.v2.uploader.upload("https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
-//   { public_id: "olympic_flag" }, 
-//   function(error, result) {console.log(result); });
