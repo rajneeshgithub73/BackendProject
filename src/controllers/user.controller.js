@@ -16,7 +16,6 @@ const registerUser = asyncHandler(async (req, res) => {
     //return response
 
     const { fullname, email, username, password } = req.body
-    console.log("request body:", req.body);
 
     if(fullname === "") {
         throw new ApiError(400, "fullname is required")
@@ -32,17 +31,18 @@ const registerUser = asyncHandler(async (req, res) => {
         $or: [{ username }, { email }]
     })
 
-    if(existedUser) throw new ApiError(409, "user already exists")
-
-    console.log("files: ", req.files)
-
-    console.log(req.files?.avatar[0]?.path);
+    if(existedUser) {
+        throw new ApiError(409, "user already exists")
+    }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
 
-    console.log(req.files?.coverImage[0]?.path);
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
 
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is required");
@@ -50,11 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
-    console.log("avatar: ", avatar);
-
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-    console.log("coverImage: ", coverImage);
 
     if(!avatar){
         throw new ApiError(400, "Avatar file is required")
@@ -62,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const user = await User.create({
         fullname,
-        avatar: avatar?.url || "",
+        avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email,
         password,
@@ -81,10 +77,15 @@ const registerUser = asyncHandler(async (req, res) => {
         new ApiResponse(200, createdUser, "user created successfully!")
     )
 
-    // return res.status(200).json({
-    //     message: "ok"
-    // })
-
 })
 
-export { registerUser, }
+// const loginUser = asyncHandler( async (req, res) => {
+//     //fetch the user details from req body
+//     //validate the user details
+//     //check if the user already exists
+//     //if the user already exists verify the email and password
+//     //send cookies to the user
+
+// })
+
+export { registerUser }
