@@ -4,6 +4,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import {v2 as cloudinary} from "cloudinary"
+import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async(userId) => {
     try {
@@ -191,7 +193,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const decodedRefreshToken = jwt.verify(
             incomingRefreshToken,
-            process.env.REFRESH_SECRET_TOKEN
+            process.env.REFRESH_TOKEN_SECRET
         )
     
         const user = await User.findById(decodedRefreshToken?._id)
@@ -209,7 +211,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             secure: true
         }
     
-        const { accessToken, refreshToken } = generateAccessAndRefreshToken(user._id)
+        const { accessToken, newRefreshToken } = generateAccessAndRefreshToken(user._id)
     
         return res
         .status(200)
@@ -349,7 +351,7 @@ const updateCoverImage = asyncHandler(async(req, res) => {
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if(!avatar.url){
+    if(!coverImage.url){
         throw new ApiError(400, "Error while uploading cover image")
     }
 
